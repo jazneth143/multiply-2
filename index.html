@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math Blitz Pro V2</title>
+    <title>Math Blitz Pro V2.1</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -30,11 +30,10 @@
         .screen { flex: 1; display: flex; flex-direction: column; padding: 20px; align-items: center; justify-content: flex-start; }
         .hidden { display: none !important; }
 
-        /* --- VERSION LABEL --- */
-        .version-tag { font-size: 0.7rem; color: #475569; margin-bottom: 10px; }
+        .version-tag { font-size: 0.7rem; color: #475569; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
         /* --- HISTORY SECTION --- */
-        #setup-screen h1 { font-size: 2.8rem; margin: 20px 0 10px; color: var(--accent); font-weight: 900; }
+        #setup-screen h1 { font-size: 3rem; margin: 10px 0 20px; color: var(--accent); font-weight: 900; }
         
         .history-container {
             width: 100%;
@@ -44,11 +43,10 @@
             margin-top: 20px;
             padding: 15px;
             border: 1px solid #334155;
-            display: block !important; /* Force visibility */
         }
 
         .history-header { display: flex; justify-content: space-between; padding: 5px 10px; font-weight: bold; font-size: 0.75rem; color: #64748b; border-bottom: 1px solid #334155; }
-        #history-list { max-height: 180px; overflow-y: auto; }
+        #history-list { max-height: 160px; overflow-y: auto; }
         .history-item { display: flex; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid #1e293b; font-size: 1rem; }
 
         /* --- GAME UI --- */
@@ -66,53 +64,54 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
 
-        #equation { font-size: 4.5rem; font-weight: 900; margin: 0; color: #fff; }
-        #answer-display { font-size: 4rem; height: 75px; color: var(--accent); font-weight: bold; margin-top: 5px; }
+        #equation { font-size: 5rem; font-weight: 900; margin: 0; color: #fff; }
+        #answer-display { font-size: 4rem; height: 80px; color: var(--accent); font-weight: bold; margin-top: 5px; }
 
-        /* --- KEYBOARD (Lifted higher for iPad) --- */
+        /* --- KEYBOARD (FIXED) --- */
         .keyboard { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
+            gap: 15px; 
             width: 100%; 
             max-width: 400px; 
             margin-top: auto;
-            margin-bottom: 60px; 
+            margin-bottom: 80px; 
         }
         
         .key { 
             background: #334155; 
-            height: 70px; 
+            height: 75px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            border-radius: 15px; 
-            font-size: 2rem; 
+            border-radius: 18px; 
+            font-size: 2.2rem; 
             font-weight: bold; 
             color: #fff;
-            border-bottom: 4px solid #0f172a;
+            border-bottom: 5px solid #0f172a;
+            cursor: pointer;
         }
         
-        .key:active { background: #475569; border-bottom-width: 1px; transform: translateY(3px); }
-        .key.del { color: var(--danger); font-size: 1rem; text-transform: uppercase; }
+        .key:active { background: #475569; border-bottom-width: 1px; transform: translateY(4px); }
+        .key.del { color: var(--danger); font-size: 1.1rem; text-transform: uppercase; }
 
         .mode-btn {
-            width: 100%; max-width: 340px; padding: 18px; margin: 6px 0;
+            width: 100%; max-width: 340px; padding: 20px; margin: 6px 0;
             background: #1e293b; color: white; border: 1px solid #334155;
-            border-radius: 15px; font-size: 1.1rem; font-weight: bold;
+            border-radius: 18px; font-size: 1.2rem; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="screen">
-        <div class="version-tag">Version 2.0 (Auto-Check + History)</div>
+        <div class="version-tag">Build 2.1 • Auto-Check Active</div>
         <h1>Math Blitz</h1>
         <button class="mode-btn" onclick="startGame(10, 'Relaxed')">🐢 Relaxed (10s)</button>
         <button class="mode-btn" onclick="startGame(5, 'Standard')">⚡ Standard (5s)</button>
         <button class="mode-btn" onclick="startGame(3, 'Insane')">🔥 Insane (3s)</button>
 
-        <div class="history-container" id="hist-box">
+        <div class="history-container">
             <div class="history-header"><span>MODE</span><span>SCORE</span><span>DATE</span></div>
             <div id="history-list"></div>
         </div>
@@ -128,7 +127,7 @@
             <div class="key" onclick="tap('1')">1</div>
             <div class="key" onclick="tap('2')">2</div>
             <div class="key" onclick="tap('3')">3</div>
-            <div class="key" onclick="tap('4')) ">4</div>
+            <div class="key" onclick="tap('4')">4</div>
             <div class="key" onclick="tap('5')">5</div>
             <div class="key" onclick="tap('6')">6</div>
             <div class="key" onclick="tap('7')">7</div>
@@ -142,26 +141,18 @@
     <script>
         let deck = [], curIdx = 0, input = "", timeLimit = 5, modeName = "Standard";
         let timer, score = 0;
-        
-        // Check for history in local storage
         let historyData = JSON.parse(localStorage.getItem('mathHistory')) || [];
 
         function updateHistoryUI() {
             const list = document.getElementById('history-list');
             if (!list) return;
-            
-            if (historyData.length === 0) {
-                list.innerHTML = '<div style="text-align:center; padding:20px; color:#475569;">No history yet. Play a game!</div>';
-            } else {
-                list.innerHTML = '';
-                // Show last 10 attempts
-                historyData.slice().reverse().slice(0, 10).forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.innerHTML = `<span>${item.mode}</span><b>${item.score}</b><span style="color:#64748b">${item.date}</span>`;
-                    list.appendChild(div);
-                });
-            }
+            list.innerHTML = historyData.length === 0 ? '<div style="text-align:center; padding:20px; color:#475569;">No attempts yet</div>' : '';
+            historyData.slice().reverse().slice(0, 10).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<span>${item.mode}</span><b>${item.score}</b><span style="color:#64748b">${item.date}</span>`;
+                list.appendChild(div);
+            });
         }
 
         function makeDeck() {
@@ -209,7 +200,6 @@
                 input += k;
                 document.getElementById('answer-display').innerText = input;
             }
-            // AUTO-CHECK (No Enter Key Needed)
             if (parseInt(input) === deck[curIdx].a) {
                 score++;
                 curIdx++;
@@ -222,19 +212,14 @@
             const correctAns = deck[curIdx].a;
             const now = new Date();
             const dateStr = (now.getMonth()+1) + "/" + now.getDate();
-            
-            // Save to LocalStorage
             historyData.push({ mode: modeName, score: score, date: dateStr });
             localStorage.setItem('mathHistory', JSON.stringify(historyData));
-            
-            alert(`TIME'S UP!\nAnswer was: ${correctAns}\nYour Score: ${score}`);
-            
+            alert(`TIME'S UP!\nAnswer was: ${correctAns}\nScore: ${score}`);
             updateHistoryUI();
             document.getElementById('setup-screen').classList.remove('hidden');
             document.getElementById('game-screen').classList.add('hidden');
         }
 
-        // Run UI update on load
         updateHistoryUI();
     </script>
 </body>
